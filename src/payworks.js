@@ -14,7 +14,6 @@ var PAYWORKS_AUTHTOK = undefined;
 
 // Read the .env environment variables
 dotenv.config();
-const base64Decode = (str) => Buffer.from(str, 'base64').toString('binary');
 const base64Encode = (str) => Buffer.from(str, 'binary').toString('base64');
 
 function encodePayworksLogin() {
@@ -31,13 +30,21 @@ async function getPayworksAuthTok(customerNumber) {
     return result.data;
 }
 
-export async function authenticateWithPayworks(customerNumber) {
-    PAYWORKS_AUTHTOK = await getPayworksAuthTok(customerNumber);
+export async function authenticateWithPayworks() {
+    if (!PAYWORKS_AUTHTOK) {
+        const customerNumber = process.env.PAYWORKS_CUSTOMER;
+        if (!customerNumber) {
+            throw new Error('PAYWORKS_CUSTOMER is not defined in environment variables.');
+        }
+        console.log('Authenticating with Payworks...');
+        PAYWORKS_AUTHTOK = await getPayworksAuthTok(customerNumber);
+    }
 }
 
 export async function getPayworksData(path) {
     const url = `${PAYWORKSURL}${path}`;
     try {
+        await authenticateWithPayworks();
         const response = await axios.request(
             {
                 ...allowLegacyRenegotiationforNodeJsOptions,

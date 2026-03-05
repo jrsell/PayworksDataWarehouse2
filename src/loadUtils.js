@@ -1,5 +1,4 @@
 import sql from 'mssql';
-import { authenticateWithPayworks } from './payworks.js';
 import { mssqlConfig } from './mssqlConfig.js';
 
 export async function connectToDatabase() {
@@ -42,8 +41,6 @@ export async function runLoader(loaderName, loadFn) {
     console.log(`Loading ${loaderName} at ${startTime.toLocaleString()}`);
 
     try {
-        console.log('Authenticating with Payworks...');
-        await authenticateWithPayworks(process.env.PAYWORKS_CUSTOMER);
         await connectToDatabase();
         await loadFn();
     } finally {
