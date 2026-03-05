@@ -3,17 +3,15 @@ import * as fs from 'fs';
 import { authenticateWithPayworks, getPayworksData } from './payworks.js';
 import { startOfWeek, addDays, format } from 'date-fns';
 import { getAICompletion } from './openAi.js';
+import { mssqlConfig } from './mssqlConfig.js';
 
-// Read the database configuration from the JSON file
-const config = JSON.parse(fs.readFileSync('mssql-admin.json'));
-
-// Read the database configuration from the JSON file
+// Read the AI prompt from disk
 const promptToGenderizeNames = fs.readFileSync('research/promptToGenderizeNames.txt', 'utf8');
 
 
 // Connect to the database
 export async function connectToDatabase() {
-    await sql.connect(config);
+    await sql.connect(mssqlConfig);
 }
 
 export function disconnectFromDatabase() {

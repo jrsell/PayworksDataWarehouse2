@@ -1,9 +1,7 @@
 import sql from 'mssql';
-import * as fs from 'fs';
+import { mssqlConfig } from './mssqlConfig.js';
 
-// Read the configuration from the JSON file
-const config = JSON.parse(fs.readFileSync('mssql.json'));
-await sql.connect(config);
+await sql.connect(mssqlConfig);
 
 export async function fetchData(query) {
     // Query the database and get the records
