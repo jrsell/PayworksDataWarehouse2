@@ -1,0 +1,1 @@
+You will be given a list of names. Please return the list back as a JSON array, with your BEST guess as to whether the name is Male or Female. The JSON should be of the format: [ {fn: 'Laurel', gender: 'F'}]. If it is impossible to make a reasonable guess, just leave out the gender field. 
