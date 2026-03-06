@@ -10,6 +10,7 @@ export async function loadDepartments() {
 
         await bulkLoad('Departments', [
             { name: 'departmentId', type: sql.Int, options: { nullable: false, primary: true } },
+            { name: 'departmentNumber', type: sql.NVarChar(50) },
             { name: 'departmentName', type: sql.NVarChar(100) },
             { name: 'storeName', type: sql.NVarChar(50) },
             { name: 'department', type: sql.NVarChar(100) },

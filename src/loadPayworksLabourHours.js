@@ -1,4 +1,5 @@
 import sql from 'mssql';
+import * as fs from 'fs';
 import { pathToFileURL } from 'url';
 import { getPayworksData } from './payworks.js';
 import { bulkLoad, runLoader } from './loadUtils.js';
@@ -17,21 +18,21 @@ export async function loadPayworksLabourHours() {
         });
 
         await bulkLoad('PayworksLabourHours', [
-            { name: 'Employee Num',             mappedName: 'employeeNum',             type: sql.NVarChar(20)  },
-            { name: 'Employee Name',            mappedName: 'employeeName',            type: sql.NVarChar(100) },
-            { name: 'Department Num',           mappedName: 'departmentNum',           type: sql.NVarChar(20)  },
-            { name: 'Department Name',          mappedName: 'departmentName',          type: sql.NVarChar(100) },
-            { name: 'Type',                     mappedName: 'type',                    type: sql.NVarChar(50)  },
-            { name: 'Pay Element Description',  mappedName: 'payElementDescription',   type: sql.NVarChar(150) },
-            { name: 'Amount',                   mappedName: 'amount',                  type: sql.Money         },
-            { name: 'Hours',                    mappedName: 'hours',                   type: sql.Float         },
-            { name: 'GL Account',               mappedName: 'glAccount',               type: sql.NVarChar(50)  },
-            { name: 'Payroll Year',             mappedName: 'payrollYear',             type: sql.NVarChar(10)  },
-            { name: 'Pay Group',                mappedName: 'payGroup',                type: sql.NVarChar(50)  },
-            { name: 'Pay Period Type',          mappedName: 'payPeriodType',           type: sql.NVarChar(50)  },
-            { name: 'Pay Period Num',           mappedName: 'payPeriodNum',            type: sql.Int           },
-            { name: 'Pay Period Ending',        mappedName: 'payPeriodEnding',         type: sql.Date          },
-            { name: 'Payment Date',             mappedName: 'paymentDate',             type: sql.Date          },
+            { name: 'ee number',                mappedName: 'employeeNum',             type: sql.NVarChar(10)  },  // maxLen: 4
+            { name: 'ee name',                  mappedName: 'employeeName',            type: sql.NVarChar(50)  },  // maxLen: 27
+            { name: 'department number',        mappedName: 'departmentNum',           type: sql.NVarChar(50)  },  // maxLen: 35
+            { name: 'department name',          mappedName: 'departmentName',          type: sql.NVarChar(60)  },  // maxLen: 50
+            { name: 'type',                     mappedName: 'type',                    type: sql.NVarChar(1)   },  // maxLen: 1
+            { name: 'pay element description',  mappedName: 'payElementDescription',   type: sql.NVarChar(50)  },  // maxLen: 30
+            { name: 'amount',                   mappedName: 'amount',                  type: sql.Money         },
+            { name: 'hours',                    mappedName: 'hours',                   type: sql.Float         },
+            { name: 'gl account',               mappedName: 'glAccount',               type: sql.NVarChar(10)  },  // maxLen: 4
+            { name: 'year',                     mappedName: 'payrollYear',             type: sql.Int           },
+            { name: 'pay group',                mappedName: 'payGroup',                type: sql.NVarChar(30)  },  // maxLen: 20
+            { name: 'run type',                 mappedName: 'payPeriodType',           type: sql.NVarChar(10)  },  // maxLen: 7
+            { name: 'pay period',               mappedName: 'payPeriodNum',            type: sql.Int           },
+            { name: 'pay period ending date',   mappedName: 'payPeriodEnding',         type: sql.Date          },
+            { name: 'payment date',             mappedName: 'paymentDate',             type: sql.Date          },
         ], rows);
     });
 }
