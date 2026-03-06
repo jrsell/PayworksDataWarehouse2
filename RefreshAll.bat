@@ -33,6 +33,11 @@ echo [4/4] Loading TimeOffRequests... >> %logFile%
 node src\loadTimeOffRequests.js >> %logFile% 2>&1
 if errorlevel 1 goto :failed
 
+echo [5/5] Loading PayworksLabourHours...
+echo [5/5] Loading PayworksLabourHours... >> %logFile%
+node src\loadPayworksLabourHours.js >> %logFile% 2>&1
+if errorlevel 1 goto :failed
+
 echo Refresh completed successfully at %date% %time% >> %logFile%
 echo Done. Output in: %logFile%
 goto :eof

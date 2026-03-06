@@ -3,6 +3,7 @@ import { loadDepartments } from './loadDepartments.js';
 import { loadEmployees } from './loadEmployees.js';
 import { loadShifts } from './loadShifts.js';
 import { loadTimeOffRequests } from './loadTimeOffRequests.js';
+import { loadPayworksLabourHours } from './loadPayworksLabourHours.js';
 
 export async function loadDatabaseSchema() {
     const startTime = new Date();
@@ -12,6 +13,7 @@ export async function loadDatabaseSchema() {
     await loadDepartments();
     await loadShifts();
     await loadTimeOffRequests();
+    await loadPayworksLabourHours();
 
     const endTime = new Date();
     const durationSec = (endTime - startTime) / 1000;
