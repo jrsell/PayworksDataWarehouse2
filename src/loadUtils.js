@@ -53,9 +53,9 @@ async function insertRefreshLog({ date, startTime, endTime, message, isError, to
     `);
 
     const request = new sql.Request();
-    request.input('date',         sql.Date,          date);
-    request.input('startTime',    sql.DateTime2,     startTime);
-    request.input('endTime',      sql.DateTime2,     endTime);
+    request.input('date',         sql.Date,      date);
+    request.input('startTime',    sql.DateTime2, startTime);
+    request.input('endTime',      sql.DateTime2, endTime);
     request.input('message',      sql.NVarChar(500), message);
     request.input('error',        sql.Int,           isError ?? null);
     request.input('totalSeconds', sql.Float,         totalSeconds);
@@ -103,8 +103,9 @@ export function leftJoin(arr1, arr2, key1, key2) {
 // ── Run loader ───────────────────────────────────────────────────────────────
 
 export async function runLoader(loaderName, loadFn) {
-    const startTime = new Date();
-    log(`Loading ${loaderName} at ${startTime.toLocaleString()}`);
+    const now = new Date();
+    const startTime = new Date(now - now.getTimezoneOffset() * 60000);
+    log(`Loading ${loaderName} at ${startTime.toISOString().slice(0, 19).replace('T', ' ')}`);
 
     let caughtError = null;
     try {
@@ -113,12 +114,13 @@ export async function runLoader(loaderName, loadFn) {
     } catch (err) {
         caughtError = err;
     } finally {
-        const endTime = new Date();
+        const now = new Date();
+        const endTime = new Date(now - now.getTimezoneOffset() * 60000);
         const totalSeconds = (endTime - startTime) / 1000;
 
         const message = caughtError
             ? `Error in ${loaderName}: ${caughtError.message}`
-            : `Loaded ${loaderName} at ${endTime.toLocaleString()}. Duration: ${totalSeconds} seconds.\n`;
+            : `Loaded ${loaderName} at ${endTime.toISOString().slice(0, 19).replace('T', ' ')}. Duration: ${totalSeconds} seconds.\n`;
 
         await log(message, {
             date:         startTime,
