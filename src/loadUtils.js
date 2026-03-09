@@ -12,9 +12,19 @@ const LOG_FILE = path.join(__dirname, '..', 'logs', 'Refresh-Log.txt');
 fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
 fs.writeFileSync(LOG_FILE, `Refresh started at ${new Date().toLocaleString()}\n`);
 
-export function log(message) {
+export async function log(message, sqlParams = null) {
     console.log(message);
-    fs.appendFileSync(LOG_FILE, message + '\n');
+    fs.appendFileSync(LOG_FILE, message + '\n'); 
+
+    if (sqlParams) {
+        try {
+            await insertRefreshLog({ message, ...sqlParams });
+        } catch (logErr) {
+            const warning = `Warning: could not write to RefreshLog: ${logErr.message}`;
+            console.log(warning);
+            fs.appendFileSync(LOG_FILE, warning + '\n');
+        }
+    }
 }
 
 // ── SQL Server helpers ───────────────────────────────────────────────────────
@@ -27,7 +37,8 @@ export function disconnectFromDatabase() {
     sql.close();
 }
 
-async function ensureRefreshLogTable() {
+
+async function insertRefreshLog({ date, startTime, endTime, message, isError, totalSeconds }) {
     await sql.query(`
         IF OBJECT_ID('RefreshLog', 'U') IS NULL
         CREATE TABLE RefreshLog (
@@ -40,9 +51,7 @@ async function ensureRefreshLogTable() {
             TotalSeconds FLOAT
         )
     `);
-}
 
-async function insertRefreshLog({ date, startTime, endTime, message, isError, totalSeconds }) {
     const request = new sql.Request();
     request.input('date',         sql.Date,          date);
     request.input('startTime',    sql.DateTime2,     startTime);
@@ -59,7 +68,6 @@ async function insertRefreshLog({ date, startTime, endTime, message, isError, to
 // ── Bulk load ────────────────────────────────────────────────────────────────
 
 export async function bulkLoad(tableName, jsonSchema, jsonData, { append = false } = {}) {
-    log(`Loading table: ${tableName}`);
 
     if (!append) {
         await sql.query(`IF OBJECT_ID('${tableName}', 'U') IS NOT NULL DROP TABLE ${tableName}`);
@@ -101,7 +109,6 @@ export async function runLoader(loaderName, loadFn) {
     let caughtError = null;
     try {
         await connectToDatabase();
-        await ensureRefreshLogTable();
         await loadFn();
     } catch (err) {
         caughtError = err;
@@ -109,24 +116,17 @@ export async function runLoader(loaderName, loadFn) {
         const endTime = new Date();
         const totalSeconds = (endTime - startTime) / 1000;
 
-        if (caughtError) {
-            log(`Error in ${loaderName}: ${caughtError.message}`);
-        } else {
-            log(`Done ${loaderName} at ${endTime.toLocaleString()}. Duration: ${totalSeconds} seconds.\n`);
-        }
+        const message = caughtError
+            ? `Error in ${loaderName}: ${caughtError.message}`
+            : `Loaded ${loaderName} at ${endTime.toLocaleString()}. Duration: ${totalSeconds} seconds.\n`;
 
-        try {
-            await insertRefreshLog({
-                date:         startTime,
-                startTime,
-                endTime,
-                message:      caughtError ? `${loaderName} failed: ${caughtError.message}` : `${loaderName} completed successfully`,
-                isError:      caughtError ? 1 : null,
-                totalSeconds,
-            });
-        } catch (logErr) {
-            log(`Warning: could not write to RefreshLog: ${logErr.message}`);
-        }
+        await log(message, {
+            date:         startTime,
+            startTime,
+            endTime,
+            isError:      caughtError ? 1 : null,
+            totalSeconds,
+        });
 
         disconnectFromDatabase();
     }
