@@ -1,4 +1,5 @@
 import { pathToFileURL } from 'url';
+import { log } from './loadUtils.js';
 import { loadDepartments } from './loadDepartments.js';
 import { loadEmployees } from './loadEmployees.js';
 import { loadShifts } from './loadShifts.js';
@@ -7,7 +8,7 @@ import { loadPayworksLabourHours } from './loadPayworksLabourHours.js';
 
 export async function loadDatabaseSchema() {
     const startTime = new Date();
-    console.log(`Loading database schema at ${startTime.toLocaleString()}`);
+    log(`Loading database schema at ${startTime.toLocaleString()}`);
 
     await loadEmployees();
     await loadDepartments();
@@ -17,7 +18,7 @@ export async function loadDatabaseSchema() {
 
     const endTime = new Date();
     const durationSec = (endTime - startTime) / 1000;
-    console.log(`Full refresh completed at ${endTime.toLocaleString()}. Duration: ${durationSec} seconds.`);
+    log(`Full refresh completed at ${endTime.toLocaleString()}. Duration: ${durationSec} seconds.`);
 }
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
