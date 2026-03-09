@@ -16,7 +16,7 @@ export async function loadEmployees() {
         const firstNames = Array.from(new Set(employeesJSON.filter((obj) => !obj.isTerminated).map((obj) => obj.firstName)));
         const aiGenders = await getAICompletion(promptToGenderizeNames, firstNames.join('\n'));
         const aiGendersArray = JSON.parse(aiGenders.replace('```json', '').replace('```', ''));
-        const employeesWithGenderJSON = leftJoin(employeesJSON, aiGendersArray, 'firstName', 'fn');
+        const employeesWithGenderJSON = leftJoin(employeesJSON, aiGendersArray, ['firstName'], ['fn']);
 
         const reportPath = '/pwnext/ReportBuilder/GenerateReport/128';
         const employeesJSON2 = await getPayworksData(reportPath);
@@ -28,7 +28,7 @@ export async function loadEmployees() {
             return obj;
         });
 
-        const employeesJSONJoined = leftJoin(employeesWithGenderJSON, employeesJSON2Cleaned, 'number', 'Employee Number');
+        const employeesJSONJoined = leftJoin(employeesWithGenderJSON, employeesJSON2Cleaned, ['number'], ['Employee Number']);
 
         await bulkLoad('Employees', [
             { name: 'id', type: sql.Int, options: { nullable: false, primary: true } },

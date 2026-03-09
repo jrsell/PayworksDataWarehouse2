@@ -53,7 +53,7 @@ export async function loadPayworksLabourHours() {
         // Load archive CSVs — first year drops/recreates the table, subsequent years append
         const ARCHIVE_YEARS = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
         for (const year of ARCHIVE_YEARS) {
-            const rows = leftJoin(loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`), deptMapping, 'department name', 'Department Name');
+            const rows = leftJoin(loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`), deptMapping, ['payworkscompany', 'department name'], ['payworkscompany','Department Name']);
             await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: year !== ARCHIVE_YEARS[0] });
         }
 
@@ -69,7 +69,7 @@ export async function loadPayworksLabourHours() {
             return obj;
         }).filter((row) => row['year'] >= 2026);
 
-        const joinedLiveRows = leftJoin(liveRows, deptMapping, 'department name', 'Department Name');
+        const joinedLiveRows = leftJoin(liveRows, deptMapping, ['payworkscompany','department name'], ['payworkscompany', 'Department Name']);
         await bulkLoad('PayworksLabourHours', SCHEMA, joinedLiveRows, { append: true });
     });
 }

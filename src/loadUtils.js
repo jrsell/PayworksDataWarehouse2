@@ -93,9 +93,9 @@ export async function bulkLoad(tableName, jsonSchema, jsonData, { append = false
 
 // ── Left join ────────────────────────────────────────────────────────────────
 
-export function leftJoin(arr1, arr2, key1, key2) {
+export function leftJoin(arr1, arr2, keys1, keys2) {
     return arr1.map((item1) => {
-        const matchingItem = arr2.find((item2) => item1[key1] === item2[key2]);
+        const matchingItem = arr2.find((item2) => keys1.every((k, i) => item1[k] === item2[keys2[i]]));
         return matchingItem ? { ...item1, ...matchingItem } : { ...item1 };
     });
 }
