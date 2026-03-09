@@ -1,15 +1,52 @@
 import sql from 'mssql';
 import * as fs from 'fs';
+import { parse } from 'csv-parse/sync';
 import { pathToFileURL } from 'url';
 import { getPayworksData } from './payworks.js';
 import { bulkLoad, runLoader } from './loadUtils.js';
 
+const ARCHIVE_DIR = new URL('../data/', import.meta.url);
+
+function loadArchiveRows(filename) {
+    const content = fs.readFileSync(new URL(filename, ARCHIVE_DIR), 'utf-8');
+    return parse(content, { columns: true, skip_empty_lines: true, trim: true, bom: true,
+        cast: (value) => value === '' ? null : value,
+    });
+}
+
+const SCHEMA = [
+    { name: 'ee number',                mappedName: 'employeeNum',             type: sql.NVarChar(10)  },  // maxLen: 4
+    { name: 'ee name',                  mappedName: 'employeeName',            type: sql.NVarChar(50)  },  // maxLen: 27
+    { name: 'department number',        mappedName: 'departmentNum',           type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },  // maxLen: 35
+    { name: 'department name',          mappedName: 'departmentName',          type: sql.NVarChar(60)  },  // maxLen: 50
+    { name: 'type',                     mappedName: 'type',                    type: sql.NVarChar(1)   },  // maxLen: 1
+    { name: 'pay element description',  mappedName: 'payElementDescription',   type: sql.NVarChar(50)  },  // maxLen: 30
+    { name: 'amount',                   mappedName: 'amount',                  type: sql.Money         },
+    { name: 'hours',                    mappedName: 'hours',                   type: sql.Float         },
+    { name: 'gl account',               mappedName: 'glAccount',               type: sql.NVarChar(10)  },  // maxLen: 4
+    { name: 'year',                     mappedName: 'payrollYear',             type: sql.Int           },
+    { name: 'pay group',                mappedName: 'payGroup',                type: sql.NVarChar(30)  },  // maxLen: 20
+    { name: 'run type',                 mappedName: 'payPeriodType',           type: sql.NVarChar(10)  },  // maxLen: 7
+    { name: 'pay period',               mappedName: 'payPeriodNum',            type: sql.Int           },
+    { name: 'pay period ending date',   mappedName: 'payPeriodEnding',         type: sql.Date          },
+    { name: 'payment date',             mappedName: 'paymentDate',             type: sql.Date          },
+];
+
 export async function loadPayworksLabourHours() {
     await runLoader('PayworksLabourHours', async () => {
+
+        // Load archive CSVs — first year drops/recreates the table, subsequent years append
+        const ARCHIVE_YEARS = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+        for (const year of ARCHIVE_YEARS) {
+            const rows = loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`);
+            await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: year !== ARCHIVE_YEARS[0] });
+        }
+
+        // Load 2: live API data — appends to the table created above
         const apiPath = '/pwnext/ReportBuilder/GenerateReport/53';
         const report = await getPayworksData(apiPath);
 
-        const rows = report.reportData.Series.map((entry) => {
+        const liveRows = report.reportData.Series.map((entry) => {
             const obj = {};
             entry.Data.forEach((value, index) => {
                 obj[report.reportData.ReportColumnDescriptions[index].Name] = value;
@@ -17,23 +54,7 @@ export async function loadPayworksLabourHours() {
             return obj;
         });
 
-        await bulkLoad('PayworksLabourHours', [
-            { name: 'ee number',                mappedName: 'employeeNum',             type: sql.NVarChar(10)  },  // maxLen: 4
-            { name: 'ee name',                  mappedName: 'employeeName',            type: sql.NVarChar(50)  },  // maxLen: 27
-            { name: 'department number',        mappedName: 'departmentNum',           type: sql.NVarChar(50)  },  // maxLen: 35
-            { name: 'department name',          mappedName: 'departmentName',          type: sql.NVarChar(60)  },  // maxLen: 50
-            { name: 'type',                     mappedName: 'type',                    type: sql.NVarChar(1)   },  // maxLen: 1
-            { name: 'pay element description',  mappedName: 'payElementDescription',   type: sql.NVarChar(50)  },  // maxLen: 30
-            { name: 'amount',                   mappedName: 'amount',                  type: sql.Money         },
-            { name: 'hours',                    mappedName: 'hours',                   type: sql.Float         },
-            { name: 'gl account',               mappedName: 'glAccount',               type: sql.NVarChar(10)  },  // maxLen: 4
-            { name: 'year',                     mappedName: 'payrollYear',             type: sql.Int           },
-            { name: 'pay group',                mappedName: 'payGroup',                type: sql.NVarChar(30)  },  // maxLen: 20
-            { name: 'run type',                 mappedName: 'payPeriodType',           type: sql.NVarChar(10)  },  // maxLen: 7
-            { name: 'pay period',               mappedName: 'payPeriodNum',            type: sql.Int           },
-            { name: 'pay period ending date',   mappedName: 'payPeriodEnding',         type: sql.Date          },
-            { name: 'payment date',             mappedName: 'paymentDate',             type: sql.Date          },
-        ], rows);
+        await bulkLoad('PayworksLabourHours', SCHEMA, liveRows, { append: true });
     });
 }
 

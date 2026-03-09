@@ -9,20 +9,25 @@ export function disconnectFromDatabase() {
     sql.close();
 }
 
-export async function bulkLoad(tableName, jsonSchema, jsonData) {
+export async function bulkLoad(tableName, jsonSchema, jsonData, { append = false } = {}) {
     console.log(`Loading table: ${tableName}`);
 
-    await sql.query(`IF OBJECT_ID('${tableName}', 'U') IS NOT NULL DROP TABLE ${tableName}`);
+    if (!append) {
+        await sql.query(`IF OBJECT_ID('${tableName}', 'U') IS NOT NULL DROP TABLE ${tableName}`);
+    }
 
     const table = new sql.Table(tableName);
-    table.create = true;
+    table.create = !append;
 
     for (const column of jsonSchema) {
         table.columns.add(column.mappedName || column.name, column.type, column.options);
     }
 
     for (const row of jsonData) {
-        table.rows.add(...jsonSchema.map((column) => row[column.name]));
+        table.rows.add(...jsonSchema.map((column) => {
+            const value = row[column.name];
+            return column.transform ? column.transform(value) : value;
+        }));
     }
 
     const request = new sql.Request();

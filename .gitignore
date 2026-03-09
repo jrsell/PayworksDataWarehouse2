@@ -1,5 +1,7 @@
 **/node_modules
 .env
+*.csv
+*.pbix
 mssql.json
 mssql-admin.json
 research/json/*.*

@@ -5,7 +5,7 @@ import { getPayworksData } from './payworks.js';
 import { getAICompletion } from './openAi.js';
 import { bulkLoad, leftJoin, runLoader } from './loadUtils.js';
 
-const promptToGenderizeNames = fs.readFileSync('research/promptToGenderizeNames.txt', 'utf8');
+const promptToGenderizeNames = fs.readFileSync('data/promptToGenderizeNames.txt', 'utf8');
 
 export async function loadEmployees() {
     await runLoader('Employees', async () => {
