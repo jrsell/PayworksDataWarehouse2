@@ -52,7 +52,7 @@ export async function loadPayworksLabourHours() {
                 obj[report.reportData.ReportColumnDescriptions[index].Name] = value;
             });
             return obj;
-        });
+        }).filter((row) => row['year'] >= 2026);
 
         await bulkLoad('PayworksLabourHours', SCHEMA, liveRows, { append: true });
     });
