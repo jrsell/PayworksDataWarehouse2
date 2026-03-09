@@ -25,6 +25,7 @@ async function loadDepartmentMapping() {
 }
 
 const SCHEMA = [
+    { name: 'payworkscompany',          mappedName: 'payworkscompany',         type: sql.NVarChar(30)  },  // maxLen: 30
     { name: 'ee number',                mappedName: 'employeeNum',             type: sql.NVarChar(10)  },  // maxLen: 4
     { name: 'ee name',                  mappedName: 'employeeName',            type: sql.NVarChar(50)  },  // maxLen: 27
     { name: 'department number',        mappedName: 'departmentNum',           type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },  // maxLen: 35
@@ -61,7 +62,7 @@ export async function loadPayworksLabourHours() {
         const report = await getPayworksData(apiPath);
 
         const liveRows = report.reportData.Series.map((entry) => {
-            const obj = {};
+            const obj = { payworkscompany: 'Cadboro Bay' };
             entry.Data.forEach((value, index) => {
                 obj[report.reportData.ReportColumnDescriptions[index].Name] = value;
             });
