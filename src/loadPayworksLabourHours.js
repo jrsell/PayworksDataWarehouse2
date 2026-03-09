@@ -25,24 +25,24 @@ async function loadDepartmentMapping() {
 }
 
 const SCHEMA = [
-    { name: 'payworkscompany',          mappedName: 'payworksCompany',         type: sql.NVarChar(30)  },  // maxLen: 30
-    { name: 'ee number',                mappedName: 'employeeNum',             type: sql.NVarChar(10)  },  // maxLen: 4
-    { name: 'ee name',                  mappedName: 'employeeName',            type: sql.NVarChar(50)  },  // maxLen: 27
-    { name: 'department number',        mappedName: 'departmentNum',           type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },  // maxLen: 35
-    { name: 'department name',          mappedName: 'departmentName',          type: sql.NVarChar(60)  },  // maxLen: 50
-    { name: 'type',                     mappedName: 'type',                    type: sql.NVarChar(1)   },  // maxLen: 1
-    { name: 'pay element description',  mappedName: 'payElementDescription',   type: sql.NVarChar(50)  },  // maxLen: 30
-    { name: 'amount',                   mappedName: 'amount',                  type: sql.Money         },
-    { name: 'hours',                    mappedName: 'hours',                   type: sql.Float         },
-    { name: 'gl account',               mappedName: 'glAccount',               type: sql.NVarChar(10)  },  // maxLen: 4
-    { name: 'year',                     mappedName: 'payrollYear',             type: sql.Int           },
-    { name: 'pay group',                mappedName: 'payGroup',                type: sql.NVarChar(30)  },  // maxLen: 20
-    { name: 'run type',                 mappedName: 'payPeriodType',           type: sql.NVarChar(10)  },  // maxLen: 7
-    { name: 'pay period',               mappedName: 'payPeriodNum',            type: sql.Int           },
-    { name: 'pay period ending date',   mappedName: 'payPeriodEnding',         type: sql.Date          },
-    { name: 'payment date',             mappedName: 'paymentDate',             type: sql.Date          },
-    { name: 'Location',                 mappedName: 'location',                type: sql.NVarChar(100) },
-    { name: 'Job Description',          mappedName: 'jobDescription',          type: sql.NVarChar(200) },
+    { name: 'payworkscompany',          mappedName: 'PayworksCompany',         type: sql.NVarChar(30)  },  // maxLen: 30
+    { name: 'ee number',                mappedName: 'Employee Num',             type: sql.NVarChar(10)  },  // maxLen: 4
+    { name: 'ee name',                  mappedName: 'Employee Name',            type: sql.NVarChar(50)  },  // maxLen: 27
+    { name: 'department number',        mappedName: 'Department Num',           type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },  // maxLen: 35
+    { name: 'department name',          mappedName: 'Department Name',          type: sql.NVarChar(60)  },  // maxLen: 50
+    { name: 'type',                     mappedName: 'Type',                    type: sql.NVarChar(1)   },  // maxLen: 1
+    { name: 'pay element description',  mappedName: 'Pay Element Description',   type: sql.NVarChar(50)  },  // maxLen: 30
+    { name: 'amount',                   mappedName: 'Amount',                  type: sql.Money         },
+    { name: 'hours',                    mappedName: 'Hours',                   type: sql.Float         },
+    { name: 'gl account',               mappedName: 'GL Account',               type: sql.NVarChar(10)  },  // maxLen: 4
+    { name: 'year',                     mappedName: 'Payroll Year',             type: sql.Int           },
+    { name: 'pay group',                mappedName: 'Pay Group',                type: sql.NVarChar(30)  },  // maxLen: 20
+    { name: 'run type',                 mappedName: 'Pay Period Type',           type: sql.NVarChar(10)  },  // maxLen: 7
+    { name: 'pay period',               mappedName: 'Pay Period Num',            type: sql.Int           },
+    { name: 'pay period ending date',   mappedName: 'Pay Period Ending',         type: sql.Date          },
+    { name: 'payment date',             mappedName: 'Payment Date',             type: sql.Date          },
+    { name: 'Location',                 mappedName: 'Location',                type: sql.NVarChar(100) },
+    { name: 'Job Description',          mappedName: 'Job Description',          type: sql.NVarChar(200) },
 ];
 
 export async function loadPayworksLabourHours() {
