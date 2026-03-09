@@ -25,7 +25,7 @@ async function loadDepartmentMapping() {
 }
 
 const SCHEMA = [
-    { name: 'payworkscompany',          mappedName: 'payworkscompany',         type: sql.NVarChar(30)  },  // maxLen: 30
+    { name: 'payworkscompany',          mappedName: 'payworksCompany',         type: sql.NVarChar(30)  },  // maxLen: 30
     { name: 'ee number',                mappedName: 'employeeNum',             type: sql.NVarChar(10)  },  // maxLen: 4
     { name: 'ee name',                  mappedName: 'employeeName',            type: sql.NVarChar(50)  },  // maxLen: 27
     { name: 'department number',        mappedName: 'departmentNum',           type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },  // maxLen: 35
@@ -53,8 +53,14 @@ export async function loadPayworksLabourHours() {
         // Load archive CSVs — first year drops/recreates the table, subsequent years append
         const ARCHIVE_YEARS = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
         for (const year of ARCHIVE_YEARS) {
-            const rows = leftJoin(loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`), deptMapping, ['payworkscompany', 'department name'], ['payworkscompany','Department Name']);
-            await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: year !== ARCHIVE_YEARS[0] });
+            const archiveRows = loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`);
+            const joinedArchiveRows = leftJoin(archiveRows, deptMapping, ['payworkscompany', 'department name'], ['PayworksCompany','Department Name'])
+                .map((row) => ({
+                    ...row,
+                    'Location':        row['Location']        ?? row['payworkscompany'],
+                    'Job Description': row['Job Description'] ?? row['department name'],
+                }));
+            await bulkLoad('PayworksLabourHours', SCHEMA, joinedArchiveRows, { append: year !== ARCHIVE_YEARS[0] });
         }
 
         // Load 2: live API data — appends to the table created above
@@ -69,7 +75,12 @@ export async function loadPayworksLabourHours() {
             return obj;
         }).filter((row) => row['year'] >= 2026);
 
-        const joinedLiveRows = leftJoin(liveRows, deptMapping, ['payworkscompany','department name'], ['payworkscompany', 'Department Name']);
+        const joinedLiveRows = leftJoin(liveRows, deptMapping, ['payworkscompany','department name'], ['PayworksCompany', 'Department Name'])
+            .map((row) => ({
+                ...row,
+                'Location':        row['Location']        ?? row['payworkscompany'],
+                'Job Description': row['Job Description'] ?? row['department name'],
+            }));
         await bulkLoad('PayworksLabourHours', SCHEMA, joinedLiveRows, { append: true });
     });
 }
