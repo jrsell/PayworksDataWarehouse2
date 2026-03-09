@@ -3,13 +3,23 @@ import * as fs from 'fs';
 import { parse } from 'csv-parse/sync';
 import { pathToFileURL } from 'url';
 import { getPayworksData } from './payworks.js';
-import { bulkLoad, runLoader } from './loadUtils.js';
+import { bulkLoad, runLoader, leftJoin } from './loadUtils.js';
 
 const ARCHIVE_DIR = new URL('../data/', import.meta.url);
 
 function loadArchiveRows(filename) {
     const content = fs.readFileSync(new URL(filename, ARCHIVE_DIR), 'utf-8');
     return parse(content, { columns: true, skip_empty_lines: true, trim: true, bom: true,
+        cast: (value) => value === '' ? null : value,
+    });
+}
+
+const DEPT_MAPPING_URL = 'https://docs.google.com/spreadsheets/d/1gZn3XVwzJn8mG2BbnWSsptjNqEZ3etcDO1AblFMt-HI/export?format=csv&gid=1938277707';
+
+async function loadDepartmentMapping() {
+    const response = await fetch(DEPT_MAPPING_URL);
+    const text = await response.text();
+    return parse(text, { columns: true, skip_empty_lines: true, trim: true, bom: true,
         cast: (value) => value === '' ? null : value,
     });
 }
@@ -30,15 +40,19 @@ const SCHEMA = [
     { name: 'pay period',               mappedName: 'payPeriodNum',            type: sql.Int           },
     { name: 'pay period ending date',   mappedName: 'payPeriodEnding',         type: sql.Date          },
     { name: 'payment date',             mappedName: 'paymentDate',             type: sql.Date          },
+    { name: 'Location',                 mappedName: 'location',                type: sql.NVarChar(100) },
+    { name: 'Job Description',          mappedName: 'jobDescription',          type: sql.NVarChar(200) },
 ];
 
 export async function loadPayworksLabourHours() {
     await runLoader('PayworksLabourHours', async () => {
 
+        const deptMapping = await loadDepartmentMapping();
+
         // Load archive CSVs — first year drops/recreates the table, subsequent years append
         const ARCHIVE_YEARS = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
         for (const year of ARCHIVE_YEARS) {
-            const rows = loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`);
+            const rows = leftJoin(loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`), deptMapping, 'department name', 'Department Name');
             await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: year !== ARCHIVE_YEARS[0] });
         }
 
@@ -54,7 +68,8 @@ export async function loadPayworksLabourHours() {
             return obj;
         }).filter((row) => row['year'] >= 2026);
 
-        await bulkLoad('PayworksLabourHours', SCHEMA, liveRows, { append: true });
+        const joinedLiveRows = leftJoin(liveRows, deptMapping, 'department name', 'Department Name');
+        await bulkLoad('PayworksLabourHours', SCHEMA, joinedLiveRows, { append: true });
     });
 }
 
