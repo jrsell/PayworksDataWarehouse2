@@ -12,10 +12,19 @@ export async function loadEmployees() {
         const employeesPath = '/pwnextv2api/v3.0/Employees?includeTerminated=true&includeDeleted=true&fields=id,number,firstName,lastName,startDate,seniorityDate,isTerminated,status,payGroupId,departmentId';
         const employeesJSON = await getPayworksData(employeesPath);
 
-        console.log('Using AI to determine employee Genders...');
-        const firstNames = Array.from(new Set(employeesJSON.filter((obj) => !obj.isTerminated).map((obj) => obj.firstName)));
-        const aiGenders = await getAICompletion(promptToGenderizeNames, firstNames.join('\n'));
-        const aiGendersArray = JSON.parse(aiGenders.replace('```json', '').replace('```', ''));
+        // Get AI-determined genders for employees based on first names, with caching to avoid repeated API calls
+        const GENDER_CACHE = new URL('../data/employeesWithGender.json', import.meta.url);
+        let aiGendersArray;
+        if (fs.existsSync(GENDER_CACHE)) {
+            aiGendersArray = JSON.parse(fs.readFileSync(GENDER_CACHE, 'utf8'));
+        } else {
+            console.log('Using AI to determine employee Genders...');
+            const firstNames = Array.from(new Set(employeesJSON.filter((obj) => !obj.isTerminated).map((obj) => obj.firstName)));
+            const aiGenders = await getAICompletion(promptToGenderizeNames, firstNames.join('\n'));
+            aiGendersArray = JSON.parse(aiGenders.replace('```json', '').replace('```', ''));
+            fs.writeFileSync(GENDER_CACHE, JSON.stringify(aiGendersArray, null, 2), 'utf8');
+        }
+
         const employeesWithGenderJSON = leftJoin(employeesJSON, aiGendersArray, ['firstName'], ['fn']);
 
         const reportPath = '/pwnext/ReportBuilder/GenerateReport/128';
