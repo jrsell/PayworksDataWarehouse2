@@ -50,38 +50,55 @@ export async function loadPayworksLabourHours() {
 
         const deptMapping = await loadDepartmentMapping();
 
-        // Load archive CSVs — first year drops/recreates the table, subsequent years append
-        const ARCHIVE_YEARS = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
-        for (const year of ARCHIVE_YEARS) {
-            const archiveRows = loadArchiveRows(`PayworksLabourHoursArchive${year}.csv`);
-            const joinedArchiveRows = leftJoin(archiveRows, deptMapping, ['payworkscompany', 'department name'], ['PayworksCompany','Department Name'])
+        // Join rows to the department mapping and backfill Location / Job Description.
+        const withDeptMapping = (rows) =>
+            leftJoin(rows, deptMapping, ['payworkscompany', 'department name'], ['PayworksCompany', 'Department Name'])
                 .map((row) => ({
                     ...row,
                     'Location':        row['Location']        ?? row['payworkscompany'],
                     'Job Description': row['Job Description'] ?? row['department name'],
                 }));
-            await bulkLoad('PayworksLabourHours', SCHEMA, joinedArchiveRows, { append: year !== ARCHIVE_YEARS[0] });
+
+        // ── Phase 1: gather every dataset BEFORE touching the database. A missing
+        //    or unreadable archive file, or a failed API call, throws here — before
+        //    any DROP — so the existing table is never left half-rebuilt. ──
+        const datasets = [];
+
+        // Archive CSVs. Each missing file is skipped (with a warning) rather than
+        // fatal, so deleting some or all archives still lets the refresh run.
+        const ARCHIVE_YEARS = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+        for (const year of ARCHIVE_YEARS) {
+            const filename = `PayworksLabourHoursArchive${year}.csv`;
+            if (!fs.existsSync(new URL(filename, ARCHIVE_DIR))) {
+                console.warn(`Archive file ${filename} not found — skipping.`);
+                continue;
+            }
+            const rows = withDeptMapping(loadArchiveRows(filename));
+            if (rows.length) datasets.push(rows);
         }
 
-        // Load 2: live API data — appends to the table created above
-        const apiPath = '/pwnext/ReportBuilder/GenerateReport/53';
-        const report = await getPayworksData(apiPath);
+        // Live API data (2026 onward).
+        const report = await getPayworksData('/pwnext/ReportBuilder/GenerateReport/53');
+        const liveRows = withDeptMapping(
+            report.reportData.Series.map((entry) => {
+                const obj = { payworkscompany: 'Cadboro Bay' };
+                entry.Data.forEach((value, index) => {
+                    obj[report.reportData.ReportColumnDescriptions[index].Name] = value;
+                });
+                return obj;
+            }).filter((row) => row['year'] >= 2026)
+        );
+        if (liveRows.length) datasets.push(liveRows);
 
-        const liveRows = report.reportData.Series.map((entry) => {
-            const obj = { payworkscompany: 'Cadboro Bay' };
-            entry.Data.forEach((value, index) => {
-                obj[report.reportData.ReportColumnDescriptions[index].Name] = value;
-            });
-            return obj;
-        }).filter((row) => row['year'] >= 2026);
-
-        const joinedLiveRows = leftJoin(liveRows, deptMapping, ['payworkscompany','department name'], ['PayworksCompany', 'Department Name'])
-            .map((row) => ({
-                ...row,
-                'Location':        row['Location']        ?? row['payworkscompany'],
-                'Job Description': row['Job Description'] ?? row['department name'],
-            }));
-        await bulkLoad('PayworksLabourHours', SCHEMA, joinedLiveRows, { append: true });
+        // ── Phase 2: rebuild the table. The first dataset drops/recreates it; the
+        //    rest append. With no archives present, the live data becomes the first
+        //    (table-creating) load, so the refresh still works end to end. ──
+        if (datasets.length === 0) {
+            throw new Error('No archive rows and no live data to load — leaving the existing PayworksLabourHours table unchanged.');
+        }
+        for (let i = 0; i < datasets.length; i++) {
+            await bulkLoad('PayworksLabourHours', SCHEMA, datasets[i], { append: i !== 0 });
+        }
     });
 }
 
