@@ -1,7 +1,7 @@
 // One-time setup: headed login to establish device trust for headless runs.
 //
-//   node interactive-login.js                 # headed; complete the SMS 2FA in the window
-//   KEEP_SESSION=1 node interactive-login.js  # keep the session + save token (skip logoff)
+//   node src/interactive-login.js                 # headed; complete the SMS 2FA in the window
+//   KEEP_SESSION=1 node src/interactive-login.js  # keep the session + save token (skip logoff)
 //
 // After you complete the 2FA once, the persistent profile (user-data/) remembers
 // the device, so the nightly refresh (node src/loadAll.js) can authenticate
@@ -20,7 +20,7 @@ import {
   SESSION_PATH,
   LOGOFF_URL,
   USER_DATA,
-} from './src/payworksBrowserLogin.js';
+} from './payworksBrowserLogin.js';
 
 dotenv.config();
 
@@ -57,7 +57,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     if (result !== 'ok') {
       console.error(`\nSetup did not complete (state: ${result}).`);
-      console.error('If you ran out of time on the 2FA prompt, just run `node interactive-login.js` again.');
+      console.error('If you ran out of time on the 2FA prompt, just run `node src/interactive-login.js` again.');
       process.exitCode = 2;
       return;
     }

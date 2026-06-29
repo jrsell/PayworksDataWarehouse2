@@ -6,7 +6,7 @@
   "description": "Tool for building a SQL server database from Payworks",
   "main": "index.js",
   "scripts": {
-    "login": "node interactive-login.js",
+    "login": "node src/interactive-login.js",
     "refresh": "node src/loadAll.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

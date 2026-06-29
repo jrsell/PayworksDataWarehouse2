@@ -40,7 +40,7 @@ cp .env.example .env                 # then fill in credentials + MSSQL_*
 complete the SMS 2FA in the window and enable "remember this device":
 
 ```bash
-npm run login        # = node interactive-login.js
+npm run login        # = node src/interactive-login.js
 ```
 
 ### Running the refresh

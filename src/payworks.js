@@ -6,7 +6,7 @@
 //   • PAYWORKS_CUSTOMER set   -> LEGACY login (customer number + basic auth,
 //                                via the external authenticator service).
 //   • PAYWORKS_CUSTOMER unset  -> NEW browser/email login (Playwright headless
-//                                OIDC/SSO; requires a one-time `node interactive-login.js`).
+//                                OIDC/SSO; requires a one-time `node src/interactive-login.js`).
 //
 // This keeps both styles available so we can fall back to the legacy flow just
 // by setting PAYWORKS_CUSTOMER in .env.

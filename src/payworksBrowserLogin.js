@@ -3,7 +3,7 @@
 // Headlessly logs into the new email-based Payworks login (OIDC/SSO) and hands
 // back an auth token (the ASP.NET_SessionId cookie) that you can reuse across
 // many data requests. Login uses a persistent browser profile (user-data/) so
-// the one-time SMS 2FA is remembered (run `node interactive-login.js` once to set that up).
+// the one-time SMS 2FA is remembered (run `node src/interactive-login.js` once to set that up).
 //
 // Public API:
 //   getAuthToken(opts)         -> { token, cookieHeader, capturedAt }
@@ -53,7 +53,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---------------------------------------------------------------------------
 export class TwoFactorRequiredError extends Error {
   constructor() {
-    super('2FA required — device trust has expired. Run `node interactive-login.js` (headed) to re-establish it.');
+    super('2FA required — device trust has expired. Run `node src/interactive-login.js` (headed) to re-establish it.');
     this.name = 'TwoFactorRequiredError';
     this.code = 'TWO_FACTOR_REQUIRED';
   }
@@ -67,7 +67,7 @@ export class SessionExpiredError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Low-level login helpers (also used by interactive-login.js for the headed 2FA setup)
+// Low-level login helpers (also used by src/interactive-login.js for the headed 2FA setup)
 // ---------------------------------------------------------------------------
 
 // Server-side auth probe: GET the portal with redirects disabled. 200 means we
