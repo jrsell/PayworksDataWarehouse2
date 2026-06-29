@@ -58,6 +58,17 @@ RefreshAll.bat
 Node handles all logging (console + `logs\Refresh-Log.txt` + the SQL `RefreshLog`
 table). Individual loaders can also be run directly, e.g. `node src\loadEmployees.js`.
 
+### Convenience launchers (Windows)
+
+Double-clickable batch files at the repo root, for common tasks:
+
+| File                    | What it does |
+|-------------------------|--------------|
+| `InteractiveLogin.bat`  | One-time headed login + SMS 2FA setup for the new email login (`node src\interactive-login.js`). |
+| `DownloadSample.bat`    | Authenticate and download Report 53 to `data\report-53-sample.json`. **No SQL import** — a quick check that login + download work (`node src\downloadSample.js`). |
+| `RefreshEmployees.bat`  | Authenticate, download, and ingest **only** the Employees table into SQL Server (`node src\loadEmployees.js`). |
+| `RefreshAll.bat`        | Full refresh of every table (used by Task Scheduler). |
+
 ### Notes
 
 - If Payworks expires the remembered device, the headless login throws
