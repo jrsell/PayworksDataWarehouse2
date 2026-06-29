@@ -19,11 +19,7 @@ PAYWORKS_PASSWORD=
 PAYWORKS_USER_NAME=
 PAYWORKS_CUSTOMER=
 
-# ─── OpenAI (employee gender enrichment) ─────────────────────────────────────
-# Disabled by default. Set ENABLE_AI_GENDER=true to infer employee gender from
-# first names via OpenAI during the Employees load (requires OPENAI_API_KEY).
-# When disabled, the Employees `gender` column is loaded NULL.
-ENABLE_AI_GENDER=false
+# ─── OpenAI ──────────────────────────────────────────────────────────────────
 OPENAI_API_KEY=
 
 # ─── SQL Server ──────────────────────────────────────────────────────────────

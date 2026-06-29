@@ -2,30 +2,38 @@ import sql from 'mssql';
 import * as fs from 'fs';
 import { pathToFileURL } from 'url';
 import { getPayworksData } from './payworks.js';
-import { getAICompletion } from './openAi.js';
 import { bulkLoad, leftJoin, runLoader } from './loadUtils.js';
 
-const promptToGenderizeNames = fs.readFileSync('data/promptToGenderizeNames.txt', 'utf8');
+// AI gender enrichment (OpenAI) is disabled by default. Set ENABLE_AI_GENDER=true
+// in .env to re-enable it; otherwise the Employees `gender` column is loaded NULL.
+// openAi.js is imported dynamically below, so OPENAI_API_KEY is only required when enabled.
+const ENABLE_AI_GENDER = (process.env.ENABLE_AI_GENDER || '').toLowerCase() === 'true';
 
 export async function loadEmployees() {
     await runLoader('Employees', async () => {
         const employeesPath = '/pwnextv2api/v3.0/Employees?includeTerminated=true&includeDeleted=true&fields=id,number,firstName,lastName,startDate,seniorityDate,isTerminated,status,payGroupId,departmentId';
         const employeesJSON = await getPayworksData(employeesPath);
 
-        // Get AI-determined genders for employees based on first names, with caching to avoid repeated API calls
-        const GENDER_CACHE = new URL('../data/employeesWithGender.json', import.meta.url);
-        let aiGendersArray;
-        if (fs.existsSync(GENDER_CACHE)) {
-            aiGendersArray = JSON.parse(fs.readFileSync(GENDER_CACHE, 'utf8'));
+        // AI-determined genders based on first names (disabled by default; see ENABLE_AI_GENDER above).
+        let employeesWithGenderJSON = employeesJSON;
+        if (ENABLE_AI_GENDER) {
+            const { getAICompletion } = await import('./openAi.js');
+            const promptToGenderizeNames = fs.readFileSync('data/promptToGenderizeNames.txt', 'utf8');
+            const GENDER_CACHE = new URL('../data/employeesWithGender.json', import.meta.url);
+            let aiGendersArray;
+            if (fs.existsSync(GENDER_CACHE)) {
+                aiGendersArray = JSON.parse(fs.readFileSync(GENDER_CACHE, 'utf8'));
+            } else {
+                console.log('Using AI to determine employee Genders...');
+                const firstNames = Array.from(new Set(employeesJSON.filter((obj) => !obj.isTerminated).map((obj) => obj.firstName)));
+                const aiGenders = await getAICompletion(promptToGenderizeNames, firstNames.join('\n'));
+                aiGendersArray = JSON.parse(aiGenders.replace('```json', '').replace('```', ''));
+                fs.writeFileSync(GENDER_CACHE, JSON.stringify(aiGendersArray, null, 2), 'utf8');
+            }
+            employeesWithGenderJSON = leftJoin(employeesJSON, aiGendersArray, ['firstName'], ['fn']);
         } else {
-            console.log('Using AI to determine employee Genders...');
-            const firstNames = Array.from(new Set(employeesJSON.filter((obj) => !obj.isTerminated).map((obj) => obj.firstName)));
-            const aiGenders = await getAICompletion(promptToGenderizeNames, firstNames.join('\n'));
-            aiGendersArray = JSON.parse(aiGenders.replace('```json', '').replace('```', ''));
-            fs.writeFileSync(GENDER_CACHE, JSON.stringify(aiGendersArray, null, 2), 'utf8');
+            console.log('AI gender enrichment disabled (set ENABLE_AI_GENDER=true to re-enable); gender will be NULL.');
         }
-
-        const employeesWithGenderJSON = leftJoin(employeesJSON, aiGendersArray, ['firstName'], ['fn']);
 
         const reportPath = '/pwnext/ReportBuilder/GenerateReport/128';
         const employeesJSON2 = await getPayworksData(reportPath);
