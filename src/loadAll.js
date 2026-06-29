@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'url';
 import { log } from './loadUtils.js';
+import { logoutPayworks } from './payworks.js';
 import { loadDepartments } from './loadDepartments.js';
 import { loadEmployees } from './loadEmployees.js';
 import { loadShifts } from './loadShifts.js';
@@ -10,11 +11,16 @@ export async function loadDatabaseSchema() {
     const startTime = new Date();
     log(`Loading database schema at ${startTime.toLocaleString()}`);
 
-    await loadEmployees();
-    await loadDepartments();
-    await loadShifts();
-    await loadTimeOffRequests();
-    await loadPayworksLabourHours();
+    try {
+        await loadEmployees();
+        await loadDepartments();
+        await loadShifts();
+        await loadTimeOffRequests();
+        await loadPayworksLabourHours();
+    } finally {
+        // Release the Payworks session (no-op for the legacy login).
+        await logoutPayworks().catch((err) => log(`Warning: Payworks logout failed: ${err.message}`));
+    }
 
     const endTime = new Date();
     const durationSec = (endTime - startTime) / 1000;

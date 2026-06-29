@@ -6,6 +6,8 @@
   "description": "Tool for building a SQL server database from Payworks",
   "main": "index.js",
   "scripts": {
+    "login": "node interactive-login.js",
+    "refresh": "node src/loadAll.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -25,6 +27,7 @@
     "dotenv": "^16.3.1",
     "google-auth-library": "^9.4.1",
     "mssql": "^10.0.1",
-    "openai": "^4.20.1"
+    "openai": "^4.20.1",
+    "playwright": "^1.61.0"
   }
 }
