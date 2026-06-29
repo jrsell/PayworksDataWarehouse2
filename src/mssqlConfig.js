@@ -28,6 +28,7 @@ if (missingVars.length > 0) {
 
 const rawServer = process.env.MSSQL_SERVER;
 const [serverHost, instanceName] = rawServer.split('\\');
+const port = getNumberEnv(process.env.MSSQL_PORT, undefined);
 
 export const mssqlConfig = {
     user: process.env.MSSQL_USER,
@@ -36,7 +37,10 @@ export const mssqlConfig = {
     database: process.env.MSSQL_DATABASE,
     options: {
         trustServerCertificate: getBooleanEnv(process.env.MSSQL_TRUST_SERVER_CERTIFICATE, true),
-        ...(instanceName ? { instanceName } : {}),
+        // Prefer a fixed port when MSSQL_PORT is set — connects straight to the
+        // instance and avoids the SQL Server Browser service entirely. Fall back
+        // to resolving the named instance (requires SQL Browser running).
+        ...(port ? { port } : (instanceName ? { instanceName } : {})),
     },
     requestTimeout: getNumberEnv(process.env.MSSQL_REQUEST_TIMEOUT, 20000),
 };
