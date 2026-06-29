@@ -9,7 +9,10 @@
 cd /d %~dp0
 
 node src\downloadSample.js
-if errorlevel 1 echo Sample download failed. Check the messages above.
+if errorlevel 1 (
+    echo Sample download failed. Check the messages above.
+    echo If authentication failed, run InteractiveLogin.bat to log in interactively.
+)
 
 echo.
 pause

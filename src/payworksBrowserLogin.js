@@ -173,7 +173,12 @@ export async function getAuthToken({
     }
 
     if (result === 'twofa') throw new TwoFactorRequiredError();
-    if (result !== 'ok') throw new Error(`Payworks login failed (state: ${result}).`);
+    if (result !== 'ok') {
+      throw new Error(
+        `Payworks login failed (state: ${result}). If this is a new machine or device trust ` +
+        'has lapsed, run `node src/interactive-login.js` (or InteractiveLogin.bat) to log in interactively.'
+      );
+    }
 
     const cookie = (await context.cookies()).find(
       (c) => c.name === SESSION_COOKIE && c.domain.includes('payworks.ca')

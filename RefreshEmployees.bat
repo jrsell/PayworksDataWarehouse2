@@ -9,7 +9,10 @@
 cd /d %~dp0
 
 node src\loadEmployees.js
-if errorlevel 1 echo Employees refresh failed. See logs\Refresh-Log.txt for details.
+if errorlevel 1 (
+    echo Employees refresh failed. See logs\Refresh-Log.txt for details.
+    echo If authentication failed, run InteractiveLogin.bat to log in interactively.
+)
 
 echo.
 pause
