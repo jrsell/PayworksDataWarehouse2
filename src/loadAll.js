@@ -9,7 +9,7 @@ import { loadPayworksLabourHours } from './loadPayworksLabourHours.js';
 
 export async function loadAll() {
     const startTime = new Date();
-    log(`Loading PayworksDataWarehouse data at ${startTime.toLocaleString()}`);
+    log(`Loading PayworksDataWarehouse at ${startTime.toLocaleString()}`);
 
     try {
         await loadEmployees();

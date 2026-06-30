@@ -31,8 +31,9 @@ export async function loadPayworksLabourHours() {
         const rows = report.reportData.Series.map((entry) =>
             Object.fromEntries(entry.Data.map((value, index) => [columnNames[index], value]))
         );
+        const rows2 = rows.map(e => ({ ...e, 'ee number': e['ee number'].replace(/^N1/, '') }));
 
-        const rowCount = await bulkLoad('_LabourHours', SCHEMA, rows, { append: false });
+        const rowCount = await bulkLoad('_LabourHours', SCHEMA, rows2, { append: false });
 
         await sql.query(`
 
