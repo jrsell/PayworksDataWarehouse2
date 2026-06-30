@@ -9,7 +9,7 @@ export async function loadTimeOffRequests() {
         const jsonTimeOffRequests = await getPayworksData(apiPath);
         const jsonTimeOffRequestsChildRows = [...new Set(jsonTimeOffRequests.flatMap((item) => item.childRows))];
 
-        await bulkLoad('TimeOffRequests', [
+        const rowCount = await bulkLoad('TimeOffRequests', [
             { name: 'torId', type: sql.Int },
             { name: 'startTime', type: sql.DateTimeOffset },
             { name: 'endTime', type: sql.DateTimeOffset },
@@ -26,6 +26,8 @@ export async function loadTimeOffRequests() {
             ALTER TABLE timeOffRequests ALTER COLUMN startTime datetime;
             ALTER TABLE timeOffRequests ALTER COLUMN endTime datetime;
         `);
+
+        return rowCount;
     });
 }
 

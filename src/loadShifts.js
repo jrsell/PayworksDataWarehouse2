@@ -13,7 +13,7 @@ export async function loadShifts() {
         const apiPath = `/pwnextv2api/v3.0/TimeManagement/EmployeeShifts?lowerBound=${startDateFmt}&upperBound=${endDateFmt}`;
         const jsonShifts = await getPayworksData(apiPath);
 
-        await bulkLoad('Shifts', [
+        const rowCount = await bulkLoad('Shifts', [
             { name: 'id', type: sql.Int, options: { nullable: false, primary: true } },
             { name: 'scheduleId', type: sql.Int },
             { name: 'employeeId', type: sql.Int },
@@ -31,6 +31,8 @@ export async function loadShifts() {
             ALTER TABLE shifts ALTER COLUMN startTime datetime;
             ALTER TABLE shifts ALTER COLUMN endTime datetime;
         `);
+
+        return rowCount;
     });
 }
 

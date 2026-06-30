@@ -5,9 +5,9 @@ import { bulkLoad, runLoader } from './loadUtils.js';
 
 const SCHEMA = [
     { name: 'payworkscompany',          mappedName: 'PayworksCompany',         type: sql.NVarChar(30)  },
-    { name: 'ee number',                mappedName: 'Employee Num',            type: sql.NVarChar(10)  },
+    { name: 'ee number',                mappedName: 'EmployeeNum',            type: sql.NVarChar(10)  },
     { name: 'ee name',                  mappedName: 'Employee Name',           type: sql.NVarChar(50)  },
-    { name: 'department number',        mappedName: 'Department Num',          type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },
+    { name: 'department number',        mappedName: 'DepartmentNum',          type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },
     { name: 'department name',          mappedName: 'Department Name',         type: sql.NVarChar(60)  },
     { name: 'type',                     mappedName: 'Type',                    type: sql.NVarChar(1)   },
     { name: 'pay element description',  mappedName: 'Pay Element Description', type: sql.NVarChar(50)  },
@@ -36,7 +36,7 @@ export async function loadPayworksLabourHours() {
             return obj;
         });
 
-        await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: false });
+        return await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: false });
     });
 }
 

@@ -38,7 +38,7 @@ export function disconnectFromDatabase() {
 }
 
 
-async function insertRefreshLog({ date, startTime, endTime, message, isError, totalSeconds }) {
+async function insertRefreshLog({ date, startTime, endTime, message, isError, totalSeconds, rowCount }) {
     await sql.query(`
         IF OBJECT_ID('RefreshLog', 'U') IS NULL
         CREATE TABLE RefreshLog (
@@ -48,8 +48,11 @@ async function insertRefreshLog({ date, startTime, endTime, message, isError, to
             EndTime      DATETIME2,
             Message      NVARCHAR(500),
             Error        INT,
-            TotalSeconds FLOAT
-        )
+            TotalSeconds FLOAT,
+            [RowCount]   INT
+        );
+        IF COL_LENGTH('RefreshLog', 'RowCount') IS NULL
+            ALTER TABLE RefreshLog ADD [RowCount] INT;
     `);
 
     const request = new sql.Request();
@@ -59,9 +62,10 @@ async function insertRefreshLog({ date, startTime, endTime, message, isError, to
     request.input('message',      sql.NVarChar(500), message);
     request.input('error',        sql.Int,           isError ?? null);
     request.input('totalSeconds', sql.Float,         totalSeconds);
+    request.input('rowCount',     sql.Int,           rowCount ?? null);
     await request.query(`
-        INSERT INTO RefreshLog (Date, StartTime, EndTime, Message, Error, TotalSeconds)
-        VALUES (@date, @startTime, @endTime, @message, @error, @totalSeconds)
+        INSERT INTO RefreshLog (Date, StartTime, EndTime, Message, Error, TotalSeconds, [RowCount])
+        VALUES (@date, @startTime, @endTime, @message, @error, @totalSeconds, @rowCount)
     `);
 }
 
@@ -88,7 +92,8 @@ export async function bulkLoad(tableName, jsonSchema, jsonData, { append = false
     }
 
     const request = new sql.Request();
-    await request.bulk(table);
+    const result = await request.bulk(table);
+    return result.rowsAffected;
 }
 
 // ── Left join ────────────────────────────────────────────────────────────────
@@ -108,9 +113,11 @@ export async function runLoader(loaderName, loadFn) {
     log(`Loading ${loaderName} at ${startTime.toISOString().slice(0, 19).replace('T', ' ')}`);
 
     let caughtError = null;
+    let rowCount = null;
     try {
         await connectToDatabase();
-        await loadFn();
+        const result = await loadFn();
+        if (typeof result === 'number') rowCount = result;
     } catch (err) {
         caughtError = err;
     } finally {
@@ -120,7 +127,7 @@ export async function runLoader(loaderName, loadFn) {
 
         const message = caughtError
             ? `Error in ${loaderName}: ${caughtError.message}`
-            : `Loaded ${loaderName} at ${endTime.toISOString().slice(0, 19).replace('T', ' ')}. Duration: ${totalSeconds} seconds.\n`;
+            : `Loaded ${loaderName} at ${endTime.toISOString().slice(0, 19).replace('T', ' ')}. Duration: ${totalSeconds} seconds. Rows: ${rowCount ?? 'n/a'}.\n`;
 
         await log(message, {
             date:         startTime,
@@ -128,6 +135,7 @@ export async function runLoader(loaderName, loadFn) {
             endTime,
             isError:      caughtError ? 1 : null,
             totalSeconds,
+            rowCount,
         });
 
         disconnectFromDatabase();
