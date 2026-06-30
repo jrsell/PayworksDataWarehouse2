@@ -14,8 +14,8 @@ export async function loadDatabaseSchema() {
     try {
         await loadEmployees();
         await loadDepartments();
-        await loadShifts();
-        await loadTimeOffRequests();
+        //await loadShifts();
+        //await loadTimeOffRequests();
         await loadPayworksLabourHours();
     } finally {
         // Release the Payworks session (no-op for the legacy login).
