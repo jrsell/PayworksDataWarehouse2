@@ -4,7 +4,6 @@ import { getPayworksData } from './payworks.js';
 import { bulkLoad, runLoader } from './loadUtils.js';
 
 const SCHEMA = [
-    { name: 'payworkscompany',          mappedName: 'PayworksCompany',         type: sql.NVarChar(30)  },
     { name: 'ee number',                mappedName: 'EmployeeNum',            type: sql.NVarChar(10)  },
     { name: 'ee name',                  mappedName: 'Employee Name',           type: sql.NVarChar(50)  },
     { name: 'department number',        mappedName: 'DepartmentNum',          type: sql.NVarChar(50),  transform: (v) => v?.match(/(\d{6})$/)?.[1] ?? v },
@@ -28,13 +27,10 @@ export async function loadPayworksLabourHours() {
         // rebuild the table — no archive CSVs, no department mapping, no filtering.
         const report = await getPayworksData('/pwnext/ReportBuilder/GenerateReport/53');
 
-        const rows = report.reportData.Series.map((entry) => {
-            const obj = { payworkscompany: 'Cadboro Bay' };
-            entry.Data.forEach((value, index) => {
-                obj[report.reportData.ReportColumnDescriptions[index].Name] = value;
-            });
-            return obj;
-        });
+        const columnNames = report.reportData.ReportColumnDescriptions.map((col) => col.Name);
+        const rows = report.reportData.Series.map((entry) =>
+            Object.fromEntries(entry.Data.map((value, index) => [columnNames[index], value]))
+        );
 
         return await bulkLoad('PayworksLabourHours', SCHEMA, rows, { append: false });
     });
