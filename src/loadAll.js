@@ -7,9 +7,9 @@ import { loadShifts } from './loadShifts.js';
 import { loadTimeOffRequests } from './loadTimeOffRequests.js';
 import { loadPayworksLabourHours } from './loadPayworksLabourHours.js';
 
-export async function loadDatabaseSchema() {
+export async function loadAll() {
     const startTime = new Date();
-    log(`Loading database schema at ${startTime.toLocaleString()}`);
+    log(`Loading PayworksDataWarehouse data at ${startTime.toLocaleString()}`);
 
     try {
         await loadEmployees();
@@ -29,7 +29,7 @@ export async function loadDatabaseSchema() {
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isDirectRun) {
-    loadDatabaseSchema().catch((err) => {
+    loadAll().catch((err) => {
         console.error(err);
         process.exit(1);
     });
