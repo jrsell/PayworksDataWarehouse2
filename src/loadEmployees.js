@@ -49,6 +49,7 @@ export async function loadEmployees() {
 
         await bulkLoad('Employees', [
             { name: 'id', type: sql.Int, options: { nullable: false, primary: true } },
+            { name: 'number', type: sql.NVarChar(20) },
             { name: 'firstName', type: sql.NVarChar(50) },
             { name: 'lastName', type: sql.NVarChar(50) },
             { name: 'isTerminated', type: sql.Bit },
