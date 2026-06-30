@@ -18,7 +18,6 @@ const SCHEMA = [
     { name: 'run type',                 mappedName: 'Pay Period Type',         type: sql.NVarChar(10)  },
     { name: 'pay period',               mappedName: 'Pay Period Num',          type: sql.Int           },
     { name: 'pay period ending date',   mappedName: 'Pay Period Ending',       type: sql.Date          },
-    { name: 'payment date',             mappedName: 'Payment Date',            type: sql.Date          },
 ];
 
 export async function loadPayworksLabourHours() {
