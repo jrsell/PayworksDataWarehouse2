@@ -23,10 +23,11 @@ const SCHEMA = [
 
 export async function loadPayworksLabourHours() {
     await runLoader('PayworksLabourHours', async () => {
-        // Pull a fresh, complete set of live data from Payworks each run and fully
-        // rebuild the table — no archive CSVs, no department mapping, no filtering.
-        const report = await getPayworksData('/pwnext/ReportBuilder/GenerateReport/53');
+        // Pull a fresh, complete set of live data from Payworks 
+        const apiPath = '/pwnext/ReportBuilder/GenerateReport/53';
+        const report = await getPayworksData(apiPath);
 
+        // Transform the report data into a format suitable for bulk loading into SQL Server
         const columnNames = report.reportData.ReportColumnDescriptions.map((col) => col.Name);
         const rows = report.reportData.Series.map((entry) =>
             Object.fromEntries(entry.Data.map((value, index) => [columnNames[index], value]))

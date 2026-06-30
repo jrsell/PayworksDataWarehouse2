@@ -4,6 +4,18 @@ import { pathToFileURL } from 'url';
 import { getPayworksData } from './payworks.js';
 import { bulkLoad, runLoader } from './loadUtils.js';
 
+const SCHEMA = [
+    { name: 'id',           type: sql.Int, options: { nullable: false, primary: true } },
+    { name: 'scheduleId',   type: sql.Int },
+    { name: 'employeeId',   type: sql.Int },
+    { name: 'startTime',    type: sql.DateTimeOffset },
+    { name: 'endTime',      type: sql.DateTimeOffset },
+    { name: 'deleted',      type: sql.Bit },
+    { name: 'positionId',   type: sql.Int },
+    { name: 'departmentId', type: sql.Int },
+    { name: 'date',         type: sql.Date },
+];
+
 export async function loadShifts() {
     await runLoader('Shifts', async () => {
         const startDateFmt = '2022-01-01';
@@ -11,19 +23,9 @@ export async function loadShifts() {
         const endDate = addDays(startOfWeekDate, 13);
         const endDateFmt = format(endDate, 'yyyy-MM-dd');
         const apiPath = `/pwnextv2api/v3.0/TimeManagement/EmployeeShifts?lowerBound=${startDateFmt}&upperBound=${endDateFmt}`;
-        const jsonShifts = await getPayworksData(apiPath);
+        const rows = await getPayworksData(apiPath);
 
-        const rowCount = await bulkLoad('Shifts', [
-            { name: 'id', type: sql.Int, options: { nullable: false, primary: true } },
-            { name: 'scheduleId', type: sql.Int },
-            { name: 'employeeId', type: sql.Int },
-            { name: 'startTime', type: sql.DateTimeOffset },
-            { name: 'endTime', type: sql.DateTimeOffset },
-            { name: 'deleted', type: sql.Bit },
-            { name: 'positionId', type: sql.Int },
-            { name: 'departmentId', type: sql.Int },
-            { name: 'date', type: sql.Date },
-        ], jsonShifts);
+        const rowCount = await bulkLoad('Shifts', SCHEMA, rows);
 
         await sql.query('delete from shifts where employeeId is null');
         await sql.query('update shifts set date = convert(date, startTime)');
